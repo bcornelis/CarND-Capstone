@@ -37,16 +37,17 @@ class WaypointUpdater(object):
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
+	self.current_pose = None
+	self.waypoints = None
 
         rospy.spin()
 
     def pose_cb(self, msg):
-        # TODO: Implement
-        pass
+	self.current_pose = msg.pose
+	self.send_final_waypoints()
 
     def waypoints_cb(self, waypoints):
-        # TODO: Implement
-        pass
+        self.waypoints = waypoints.waypoints
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
@@ -70,6 +71,60 @@ class WaypointUpdater(object):
             wp1 = i
         return dist
 
+    def get_next_waypoint_index(self, pose):
+	# proper state?
+	if (self.waypoints is None or pose is None):
+	    return None
+
+	# TODO: this should be optimized keeping the last location as a parameter
+	# car position
+	car_x = pose.position.x
+	car_y = pose.position.y
+
+	# Values we're looking for
+	closest_dist = None
+	closest_wp_idx = -1;
+
+	for waypoint_idx, waypoint in enumerate(self.waypoints):
+	    # easier references
+	    waypoint_x = waypoint.pose.pose.position.x
+	    waypoint_y = waypoint.pose.pose.position.y
+
+	    # calculate the distance to this waypoint
+	    dist = math.sqrt((car_x-waypoint_x)**2 + (car_y-waypoint_y)**2)
+
+	    if (closest_dist is None or closest_dist > dist):
+		closest_dist = dist
+		closest_wp_idx = waypoint_idx
+	
+	# ----------
+	rospy.logdebug('Closest waypoint for current position (%d,%d) is waypoint %d with position (%d,%d)', 
+		pose.position.x, pose.position.y,
+		closest_wp_idx,
+		self.waypoints[closest_wp_idx].pose.pose.position.x, self.waypoints[closest_wp_idx].pose.pose.position.y )
+	# ----------
+  	return closest_wp_idx if (closest_dist is not None) else None
+
+    def send_final_waypoints(self):
+	# Make sure the required data is available
+	if( self.current_pose is None or self.waypoints is None):
+	    return
+
+	# Get information about the cars current position
+	next_waypoint_idx = self.get_next_waypoint_index(self.current_pose)
+
+	# Generate an array containing the waypoints
+	waypoints_in_front = self.waypoints[next_waypoint_idx:next_waypoint_idx+LOOKAHEAD_WPS]
+
+	# set the velocities for those waypoints
+	for waypoint_idx, waypoint in enumerate(waypoints_in_front):
+	    self.set_waypoint_velocity( waypoints_in_front, waypoint_idx, 10*0.447)
+
+	# Create the lane object to be send
+	lane = Lane()
+	lane.waypoints = waypoints_in_front
+
+	self.final_waypoints_pub.publish(lane)
 
 if __name__ == '__main__':
     try:

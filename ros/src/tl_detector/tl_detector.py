@@ -10,12 +10,13 @@ from light_classification.tl_classifier import TLClassifier
 import tf
 import cv2
 import yaml
+import math
 
 STATE_COUNT_THRESHOLD = 3
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node('tl_detector')
+        rospy.init_node('tl_detector', log_level=rospy.DEBUG)
 
         self.pose = None
         self.waypoints = None
@@ -100,8 +101,32 @@ class TLDetector(object):
             int: index of the closest waypoint in self.waypoints
 
         """
-        #TODO implement
-        return 0
+        # proper state?
+	if (self.waypoints is None or pose is None):
+	    return None
+
+	# TODO: this should be optimized keeping the last location as a parameter
+	# car position
+	ref_x = pose.position.x
+	ref_y = pose.position.y
+
+	# Values we're looking for
+	closest_dist = None
+	closest_wp_idx = -1;
+
+	for waypoint_idx, waypoint in enumerate(self.waypoints.waypoints):
+	    # easier references
+	    waypoint_x = waypoint.pose.pose.position.x
+	    waypoint_y = waypoint.pose.pose.position.y
+
+	    # calculate the distance to this waypoint
+	    dist = math.sqrt((ref_x-waypoint_x)**2 + (ref_y-waypoint_y)**2)
+
+	    if (closest_dist is None or closest_dist > dist):
+		closest_dist = dist
+		closest_wp_idx = waypoint_idx
+	
+  	return closest_wp_idx if (closest_dist is not None) else None
 
     def get_light_state(self, light):
         """Determines the current color of the traffic light
@@ -138,11 +163,25 @@ class TLDetector(object):
         if(self.pose):
             car_position = self.get_closest_waypoint(self.pose.pose)
 
-        #TODO find the closest visible traffic light (if one exists)
+            #TODO find the closest visible traffic light (if one exists)
+	    for stop_line_position in stop_line_positions:
+		# stop line positions are (x,y) coordinates; get the closes waypoint
+		stopLinePosPose = Pose()
+		stopLinePosPose.position.x = stop_line_position[0]
+		stopLinePosPose.position.y = stop_line_position[1]
+		stopLinePosIdx = self.get_closest_waypoint(stopLinePosPose)
+
+		# we have the index of the current stop position. If in front of the car, keep if close
+		if(stopLinePosIdx > car_position ):
+		    # keep if first one or closest
+		    if( light is None or light_idx > stopLinePosIdx ):
+			light = stopLinePosPose
+			light_idx = stopLinePosIdx
 
         if light:
             state = self.get_light_state(light)
-            return light_wp, state
+	    rospy.logdebug('Light found at: %s, %s', light_idx, state)
+            return light_idx, state
         self.waypoints = None
         return -1, TrafficLight.UNKNOWN
 

@@ -68,7 +68,10 @@ class DBWNode(object):
 		ki=.5, 
 		kd=.5,
 		mn=decel_limit,
-		mx=accel_limit)
+		mx=accel_limit,
+		vehicle_mass=vehicle_mass,
+		fuel_capacity=fuel_capacity,
+		wheel_radius=wheel_radius)
 
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_cb)

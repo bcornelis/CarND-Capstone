@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+from std_msgs.msg import Int32
 
 import math
 
@@ -26,19 +27,20 @@ LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this n
 
 class WaypointUpdater(object):
     def __init__(self):
-        rospy.init_node('waypoint_updater')
+        rospy.init_node('waypoint_updater', log_level=rospy.DEBUG)
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-
+	rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb, queue_size=1)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
 	self.current_pose = None
 	self.waypoints = None
+	self.tl_idx = None
 
         rospy.spin()
 
@@ -50,7 +52,7 @@ class WaypointUpdater(object):
         self.waypoints = waypoints.waypoints
 
     def traffic_cb(self, msg):
-        # TODO: Callback for /traffic_waypoint message. Implement
+        self.tl_idx = msg
         pass
 
     def obstacle_cb(self, msg):
@@ -112,6 +114,7 @@ class WaypointUpdater(object):
 
 	# Get information about the cars current position
 	next_waypoint_idx = self.get_next_waypoint_index(self.current_pose)
+	rospy.logdebug('Current location: %s', next_waypoint_idx)
 
 	# Generate an array containing the waypoints
 	waypoints_in_front = self.waypoints[next_waypoint_idx:next_waypoint_idx+LOOKAHEAD_WPS]
@@ -119,6 +122,14 @@ class WaypointUpdater(object):
 	# set the velocities for those waypoints
 	for waypoint_idx, waypoint in enumerate(waypoints_in_front):
 	    self.set_waypoint_velocity( waypoints_in_front, waypoint_idx, 10*0.447)
+
+	# red light?
+	if( self.tl_idx is not None and (self.tl_idx > next_waypoint_idx and self.tl_idx < next_waypoint_idx+LOOKAHEAD_WPS ) ):
+	    index_in_array = self.tl_idx - next_waypoint_idx
+	    for idx in range(0, index_in_array):
+		dist = self.distance(waypoints_in_front[0].pose.pose.position, waypoints_in_front[index_in_array].pose.pose.position)
+		vel  = math.sqrt(2 * 0.6 * dist) 
+		self.set_waypoint_velocity( waypoints_in_front, waypoint_idx, vel)
 
 	# Create the lane object to be send
 	lane = Lane()

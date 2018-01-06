@@ -22,6 +22,9 @@ class Controller(object):
 		kwargs['mx'])
 
 	self.prev_time = None
+	self.mass = kwargs['vehicle_mass']
+	self.fuel_capacity = kwargs['fuel_capacity']
+	self.wheel_radius = kwargs['wheel_radius']
         pass
 
     def control(self, twist_cmd, current_velocity):
@@ -41,6 +44,11 @@ class Controller(object):
 
 	steer = self.yaw_controller.get_steering(lin_vel, ang_vel, current_velocity.twist.linear.x)
 	throttle = self.throttle_pid.step(vel_err, time_delta)
+	brake = 0.
+
+	if( throttle <= 0.):
+	    brake = -throttle * (self.mass + self.fuel_capacity * GAS_DENSITY) * self.wheel_radius
+	    throttle = 0.
         
 	# Return throttle, brake, steer
-        return throttle, 0., steer
+        return throttle, brake, steer

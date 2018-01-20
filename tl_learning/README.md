@@ -2,6 +2,9 @@
 
 This directory contains files to setup and run the [TensforFlow Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection).
 
+### Dataset
+The dataset used, dataset-sdcnd-capstone.zip, is not my own work and has been downloaded from the Udacity forums.
+
 ### Files
 This directory contains the following files:
 * [object_detection_test.ipynb](object_detection_test.ipynb): This file is copied from the original [Object Detection API tutorial](https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb) and has been slightly modified to test the model for the current structure

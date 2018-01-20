@@ -2,6 +2,9 @@
 
 This directory contains files to setup and run the [TensforFlow Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection).
 
+### Dataset
+The dataset used, dataset-sdcnd-capstone.zip, is not my own work and has been downloaded from the Udacity forums.
+
 ### Files
 This directory contains the following files:
 * [object_detection_test.ipynb](object_detection_test.ipynb): This file is copied from the original [Object Detection API tutorial](https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb) and has been slightly modified to test the model for the current structure
@@ -22,6 +25,10 @@ protoc object_detection/protos/*.proto --python_out=.
 cd ..
 cd ..
 
+```
+There is a problem with this version while exporting the inference graph, so [this](https://github.com/tensorflow/models/issues/2861) fix has to be applied
+```bash
+sed -i -e 's/layout_optimizer/optimize_tensor_layout/g' models/research/object_detection/exporter.py
 ```
 
 2. Download the models to test with
@@ -62,19 +69,16 @@ python models/research/object_detection/train.py \
   --train_dir=dataset/data/sim_training_data/sim_data_capture/
 ```
 
-5. Export for inference
-There was an error in the version of Tensorflow, which can be solved like this: https://github.com/tensorflow/models/issues/2861
-```bash
-nano models/research/object_detection/exporter.py
-
-```
-
+5. Export for inference (replace the 233 in the command to the latest version available)
 ```bash
 python models/research/object_detection/export_inference_graph.py \
   --pipeline_config_path=./rfcn_resnet101_coco-udacity_sim.config \
   --trained_checkpoint_prefix=dataset/data/sim_training_data/sim_data_capture/model.ckpt-233 \
   --output_directory=frozen/
-
 ```
 
 #### Testing
+For testing, just open the Jupyter notebook and execute all the steps:
+```bash
+jupyter notebook object_detection_test.ipynb
+```

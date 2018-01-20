@@ -69,7 +69,7 @@ python models/research/object_detection/train.py \
   --train_dir=dataset/data/sim_training_data/sim_data_capture/
 ```
 
-5. Export for inference
+5. Export for inference (replace the 233 in the command to the latest version available)
 ```bash
 python models/research/object_detection/export_inference_graph.py \
   --pipeline_config_path=./rfcn_resnet101_coco-udacity_sim.config \

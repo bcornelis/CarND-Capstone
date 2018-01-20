@@ -50,7 +50,7 @@ export PYTHONPATH=/home/bcornelis/UdacitySelfDrivingCar/term3/CarND-Capstone/tl_
 4. Train the model
 ```bash
 python models/research/object_detection/train.py \
-  --pipeline_config_path=./faster_rcnn_inception_v2_coco-udacity_sim.config \
+  --pipeline_config_path=./rfcn_resnet101_coco-udacity_sim.config \
   --train_dir=dataset/data/sim_training_data/sim_data_capture/
 ```
 

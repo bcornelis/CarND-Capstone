@@ -26,6 +26,10 @@ cd ..
 cd ..
 
 ```
+There is a problem with this version while exporting the inference graph, so [this](https://github.com/tensorflow/models/issues/2861) fix has to be applied
+```bash
+sed -i -e 's/layout_optimizer/optimize_tensor_layout/g' models/research/object_detection/exporter.py
+```
 
 2. Download the models to test with
 ```bash
@@ -66,18 +70,15 @@ python models/research/object_detection/train.py \
 ```
 
 5. Export for inference
-There was an error in the version of Tensorflow, which can be solved like this: https://github.com/tensorflow/models/issues/2861
-```bash
-nano models/research/object_detection/exporter.py
-
-```
-
 ```bash
 python models/research/object_detection/export_inference_graph.py \
   --pipeline_config_path=./rfcn_resnet101_coco-udacity_sim.config \
   --trained_checkpoint_prefix=dataset/data/sim_training_data/sim_data_capture/model.ckpt-233 \
   --output_directory=frozen/
-
 ```
 
 #### Testing
+For testing, just open the Jupyter notebook and execute all the steps:
+```bash
+jupyter notebook object_detection_test.ipynb
+```

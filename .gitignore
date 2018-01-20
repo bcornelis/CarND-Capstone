@@ -4,3 +4,7 @@ build
 devel
 
 profile.tmp
+
+tl_learning/dataset/
+tl_learning/models/
+tl_learning/pre_trained/

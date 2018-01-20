@@ -1,3 +1,8 @@
+[//]: # (Image References)
+[example_result_green]: ./images/example_result_green.png
+[example_result_yellow]: ./images/example_result_yellow.png
+[example_result_red]: ./images/example_result_red.png
+
 ## Explanation
 
 This directory contains files to setup and run the [TensforFlow Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection).
@@ -82,3 +87,11 @@ For testing, just open the Jupyter notebook and execute all the steps:
 ```bash
 jupyter notebook object_detection_test.ipynb
 ```
+
+The following results are generated for the notebook, showing the detection process is correctly working:
+##### Green
+![Validation Result Green][example_result_green]
+##### Yellow
+![Validation Result Yellow][example_result_yellow]
+##### Red
+![Validation Result Red][example_result_red]

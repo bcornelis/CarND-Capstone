@@ -23,7 +23,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
-
+STOP_BEFORE_WPS = 15
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -125,11 +125,19 @@ class WaypointUpdater(object):
 
 	# red light?
 	if( self.tl_idx is not None and (self.tl_idx > next_waypoint_idx and self.tl_idx < next_waypoint_idx+LOOKAHEAD_WPS ) ):
-	    index_in_array = self.tl_idx - next_waypoint_idx
-	    for idx in range(0, index_in_array):
-		dist = self.distance(waypoints_in_front[0].pose.pose.position, waypoints_in_front[index_in_array].pose.pose.position)
-		vel  = math.sqrt(2 * 0.6 * dist) 
-		self.set_waypoint_velocity( waypoints_in_front, waypoint_idx, vel)
+            # index of the red light in the array
+            index_in_array = self.tl_idx - next_waypoint_idx 
+            # index of the stopping point in the array, STOP_BEFORE_WPS waypoints before the red light
+            start_index_of_stop = max(0, index_in_array - STOP_BEFORE_WPS)
+            # the sop-period should always have velocity 0 
+            for idx in range(start_index_of_stop, index_in_array):
+		self.set_waypoint_velocity( waypoints_in_front, idx, 0.)
+	    # before the stopping line
+	    if( start_index_of_stop > 0 ):
+		for idx in range(0, index_in_array):
+		    dist = self.distance(waypoints_in_front[0].pose.pose.position, waypoints_in_front[index_in_array].pose.pose.position)
+		    vel  = math.sqrt(2 * 0.6 * dist) 
+		    self.set_waypoint_velocity( waypoints_in_front, idx, vel)
 
 	# Create the lane object to be send
 	lane = Lane()

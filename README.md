@@ -34,9 +34,11 @@ The logic of this method is:
 To find the closest waypoint to a specific location (current cars position, light position, ...) the get_next_waypoint_index method is implemented. This will iterate over all waypoints, and finds the one with the closest distance in front of the car.
 
 #### tl_classifier.py
-The input of the classifier is an image from the camera, and it should detect whether or not a traffic light is visible, and if it's showing a red light. There are multiple possible ways of implementing this: machine learning, opencv, ...
+~~The input of the classifier is an image from the camera, and it should detect whether or not a traffic light is visible, and if it's showing a red light. There are multiple possible ways of implementing this: machine learning, opencv, ...
 
-On this project, opencv is used to check if red lights are available. Logic explained in https://solarianprogrammer.com/2015/05/08/detect-red-circles-image-using-opencv/ is used to check if there are any red lights in the image.
+~~On this project, opencv is used to check if red lights are available. Logic explained in https://solarianprogrammer.com/2015/05/08/detect-red-circles-image-using-opencv/ is used to check if there are any red lights in the image.
+
+I use TensorFlow Object Detection API to detect lights in images. More information can be found in [README](tl_learning/README.md)
 
 #### tl_detector.py
 The most important update in this class is the get_light_state: this method will iterate over the stop line positions in the stop_line_positions array, and find the closest one. If it's in the front of the car, the get_light_state method is used to find the state of the light (red or not). To find the state, the previous classifier is used.

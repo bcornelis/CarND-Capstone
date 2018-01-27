@@ -20,11 +20,18 @@ class Controller(object):
 		kwargs['kd'], 
 		kwargs['mn'], 
 		kwargs['mx'])
+	self.brake_pid = PID(
+                kwargs['brake_kp'],
+                kwargs['brake_ki'],
+                kwargs['brake_kd'],
+                kwargs['brake_mn'],
+                kwargs['brake_mx'])
 
 	self.prev_time = None
-	self.mass = kwargs['vehicle_mass']
+	self.vehicle_mass = kwargs['vehicle_mass']
 	self.fuel_capacity = kwargs['fuel_capacity']
 	self.wheel_radius = kwargs['wheel_radius']
+	self.decel_limit = kwargs['decel_limit']
         pass
 
     def control(self, twist_cmd, current_velocity):
@@ -38,7 +45,7 @@ class Controller(object):
 	time_delta = current_time - self.prev_time
 	self.prev_time = current_time
 
-	lin_vel = abs(twist_cmd.twist.linear.x)
+	lin_vel = twist_cmd.twist.linear.x
 	ang_vel = twist_cmd.twist.angular.z
         vel_err = lin_vel - current_velocity.twist.linear.x
 
@@ -46,9 +53,9 @@ class Controller(object):
 	throttle = self.throttle_pid.step(vel_err, time_delta)
 	brake = 0.
 
-	if( throttle <= 0.):
-	    brake = -throttle * (self.mass + self.fuel_capacity * GAS_DENSITY) * self.wheel_radius
-	    throttle = 0.
-        
+	if( throttle <= .0 ):
+	    brake = self.brake_pid.step(-vel_err, time_delta)
+	    brake = abs(brake * (self.decel_limit*self.vehicle_mass*self.wheel_radius))
+
 	# Return throttle, brake, steer
         return throttle, brake, steer

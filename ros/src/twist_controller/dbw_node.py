@@ -64,14 +64,20 @@ class DBWNode(object):
 		min_speed=1.0*0.447, 
 		max_lat_accel=max_lat_accel, 
 		max_steer_angle=max_steer_angle,
-		kp=5., 
-		ki=.5, 
-		kd=.5,
-		mn=decel_limit,
-		mx=accel_limit,
+		kp=.35,
+		ki=.0,
+		kd=.0,
+		mn=.0,
+		mx=1.,
+		brake_kp=.3,
+		brake_ki=.0,
+		brake_kd=.0,
+		brake_mn=.0,
+		brake_mx=1.,
 		vehicle_mass=vehicle_mass,
 		fuel_capacity=fuel_capacity,
-		wheel_radius=wheel_radius)
+		wheel_radius=wheel_radius,
+		decel_limit=decel_limit)
 
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_cb)

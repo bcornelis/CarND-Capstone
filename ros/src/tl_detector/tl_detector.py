@@ -7,6 +7,7 @@ from styx_msgs.msg import Lane
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from light_classification.tl_classifier import TLClassifier
+from light_classification.tl_classifier_topic import TLClassifierTopic
 import tf
 import cv2
 import yaml
@@ -16,12 +17,13 @@ STATE_COUNT_THRESHOLD = 3
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node('tl_detector', log_level=rospy.DEBUG)
+        rospy.init_node('tl_detector')
 
         self.pose = None
         self.waypoints = None
         self.camera_image = None
         self.lights = []
+	self.use_hardcoded_tl_classifier = True
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -42,8 +44,13 @@ class TLDetector(object):
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
-        self.listener = tf.TransformListener()
+	self.listener = tf.TransformListener()
+	if self.use_hardcoded_tl_classifier:
+	    rospy.loginfo('Using Topic-Light-Classifier implementation')
+            self.light_classifier = TLClassifierTopic()
+	else:
+            rospy.loginfo('Using TensorFlow-Light-Classifier implementation')
+            self.light_classifier = TLClassifier()
 
         self.state = TrafficLight.UNKNOWN
         self.last_state = TrafficLight.UNKNOWN
@@ -138,7 +145,7 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        if(not self.has_image):
+        if(not self.use_hardcoded_tl_classifier and not self.has_image):
             self.prev_light_loc = None
             return False
 
@@ -180,7 +187,6 @@ class TLDetector(object):
 
         if light:
             state = self.get_light_state(light)
-	    rospy.logdebug('Light found at: %s, %s', light_idx, state)
             return light_idx, state
         self.waypoints = None
         return -1, TrafficLight.UNKNOWN

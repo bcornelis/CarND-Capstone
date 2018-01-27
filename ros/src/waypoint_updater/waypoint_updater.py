@@ -28,32 +28,34 @@ STOP_BEFORE_WPS = 15
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater', log_level=rospy.DEBUG)
-
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
-
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
 	rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb, queue_size=1)
-
-        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
-
+        self.final_waypoints_pub = rospy.Publisher('/final_waypoints', Lane, queue_size=1)
         # TODO: Add other member variables you need below
 	self.current_pose = None
 	self.waypoints = None
 	self.tl_idx = None
 
+	self.max_velocity = None
+
+	rospy.Timer(rospy.Duration(.4), self.update_waypoints_cb)
         rospy.spin()
+
+    def update_waypoints_cb(self, event):
+	self.send_final_waypoints()
 
     def pose_cb(self, msg):
 	self.current_pose = msg.pose
-	self.send_final_waypoints()
 
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints.waypoints
+	if self.max_velocity is None:
+	    self.max_velocity = self.get_waypoint_velocity(self.waypoints[0])
 
     def traffic_cb(self, msg):
-        self.tl_idx = msg
-        pass
+        self.tl_idx = msg.data
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
@@ -114,14 +116,13 @@ class WaypointUpdater(object):
 
 	# Get information about the cars current position
 	next_waypoint_idx = self.get_next_waypoint_index(self.current_pose)
-	rospy.logdebug('Current location: %s', next_waypoint_idx)
 
 	# Generate an array containing the waypoints
 	waypoints_in_front = self.waypoints[next_waypoint_idx:next_waypoint_idx+LOOKAHEAD_WPS]
 
 	# set the velocities for those waypoints
 	for waypoint_idx, waypoint in enumerate(waypoints_in_front):
-	    self.set_waypoint_velocity( waypoints_in_front, waypoint_idx, 10*0.447)
+	    self.set_waypoint_velocity( waypoints_in_front, waypoint_idx, self.max_velocity)
 
 	# red light?
 	if( self.tl_idx is not None and (self.tl_idx > next_waypoint_idx and self.tl_idx < next_waypoint_idx+LOOKAHEAD_WPS ) ):
@@ -129,14 +130,18 @@ class WaypointUpdater(object):
             index_in_array = self.tl_idx - next_waypoint_idx 
             # index of the stopping point in the array, STOP_BEFORE_WPS waypoints before the red light
             start_index_of_stop = max(0, index_in_array - STOP_BEFORE_WPS)
+
             # the sop-period should always have velocity 0 
             for idx in range(start_index_of_stop, index_in_array):
 		self.set_waypoint_velocity( waypoints_in_front, idx, 0.)
+
 	    # before the stopping line
 	    if( start_index_of_stop > 0 ):
-		for idx in range(0, index_in_array):
-		    dist = self.distance(waypoints_in_front[0].pose.pose.position, waypoints_in_front[index_in_array].pose.pose.position)
+		for idx in range(0, start_index_of_stop):
+		    dist = self.distance(waypoints_in_front, 0, start_index_of_stop-idx)
 		    vel  = math.sqrt(2 * 0.6 * dist) 
+		    if( vel > self.max_velocity ):
+			vel = self.max_velocity
 		    self.set_waypoint_velocity( waypoints_in_front, idx, vel)
 
 	# Create the lane object to be send

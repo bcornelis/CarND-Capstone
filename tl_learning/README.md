@@ -64,7 +64,7 @@ rm dataset-sdcnd-capstone.zip
 ```
 4. Set the PYTHONPATH variable
 ```bash
-export PYTHONPATH=/home/bcornelis/UdacitySelfDrivingCar/term3/CarND-Capstone/tl_learning/models/research/:/home/bcornelis/UdacitySelfDrivingCar/term3/CarND-Capstone/tl_learning/models/research/slim
+export PYTHONPATH=`pwd`/models/research/:`pwd`/models/research/slim
 ```
 
 4. Train the model

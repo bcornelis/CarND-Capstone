@@ -1,6 +1,8 @@
 from styx_msgs.msg import TrafficLight
 import numpy as np
 import tensorflow as tf
+import rospy
+import os
 
 from PIL import Image
 
@@ -8,7 +10,9 @@ class TLClassifier(object):
     def __init__(self):
 
 	"""Specify configuration"""
-	PATH_TO_CKPT = '../../../tl_learning/frozen/frozen_inference_graph.pb'
+	base_path = os.path.dirname(os.path.abspath(__file__))
+	PATH_TO_CKPT = os.path.join(base_path, '../../../../tl_learning/frozen/frozen_inference_graph.pb')
+	rospy.loginfo('TensorFlow Frozen Inference Graph path: %s', PATH_TO_CKPT)
 
 	"""Load the trained model"""
 	detection_graph = tf.Graph()
@@ -25,14 +29,6 @@ class TLClassifier(object):
 	self.detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
 	self.num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 	self.image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
-
-	"""Warm up the system by testing on 2 images"""
-	test_image = Image.open('./left0011.jpg')
-	test_image_result = self.get_classification(test_image)
-	assert test_image_result == 3 # Yellow
-        test_image = Image.open('./left0568.jpg')
-        test_image_result = self.get_classification(test_image)
-        assert test_image_result == 1 # Green
 
         pass
 
@@ -62,7 +58,14 @@ class TLClassifier(object):
 	    #find the highest score in the scores list
 	    max_score_idx = np.squeeze(scores).argmax()
 	    # and get the class going with this score
-	    result = np.squeeze(classes).astype(np.int32)[max_score_idx]
+	    tf_result = np.squeeze(classes).astype(np.int32)[max_score_idx]
+	    # convert from the TF result to internal format
+	    if( tf_result == 1 ):
+		result = TrafficLight.GREEN
+	    elif( tf_result == 2 ):
+		result = TrafficLight.RED
+	    elif( tf_result == 3 ):
+		result = TrafficLight.YELLOW
 
 	return result
 

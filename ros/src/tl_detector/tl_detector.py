@@ -8,6 +8,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from light_classification.tl_classifier import TLClassifier
 from light_classification.tl_classifier_topic import TLClassifierTopic
+from light_classification.tl_classifier_opencv import TLClassifierOpenCV
 import tf
 import cv2
 import yaml
@@ -15,15 +16,20 @@ import math
 
 STATE_COUNT_THRESHOLD = 3
 
+LIGHT_CLASSIFIER_TOPIC=0
+LIGHT_CLASSIFIER_TFMODELAPI=1
+LIGHT_CLASSIFIER_OPENCV=2
+
 class TLDetector(object):
     def __init__(self):
         rospy.init_node('tl_detector')
+
+	self.classifier_implementation = LIGHT_CLASSIFIER_OPENCV
 
         self.pose = None
         self.waypoints = None
         self.camera_image = None
         self.lights = []
-	self.use_hardcoded_tl_classifier = True
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -45,12 +51,15 @@ class TLDetector(object):
 
         self.bridge = CvBridge()
 	self.listener = tf.TransformListener()
-	if self.use_hardcoded_tl_classifier:
-	    rospy.loginfo('Using Topic-Light-Classifier implementation')
-            self.light_classifier = TLClassifierTopic()
-	else:
+	if self.classifier_implementation == LIGHT_CLASSIFIER_OPENCV:
+	    rospy.loginfo('Using OpenCV-Light-Classifier implementation')
+	    self.light_classifier = TLClassifierOpenCV()
+	elif self.classifier_implementation == LIGHT_CLASSIFIER_TFMODELAPI:
             rospy.loginfo('Using TensorFlow-Light-Classifier implementation')
             self.light_classifier = TLClassifier()
+	else:
+	    rospy.loginfo('Using Topic-Light-Classifier implementation')
+            self.light_classifier = TLClassifierTopic()
 
         self.state = TrafficLight.UNKNOWN
         self.last_state = TrafficLight.UNKNOWN
@@ -145,7 +154,7 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        if(not self.use_hardcoded_tl_classifier and not self.has_image):
+        if(not self.has_image and (self.classifier_implementation == LIGHT_CLASSIFIER_TFMODELAPI or self.classifier_implementation == LIGHT_CLASSIFIER_OPENCV)):
             self.prev_light_loc = None
             return False
 

@@ -13,7 +13,7 @@ The dataset used, dataset-sdcnd-capstone.zip, is not my own work and has been do
 ### Files
 This directory contains the following files:
 * [object_detection_test.ipynb](object_detection_test.ipynb): This file is copied from the original [Object Detection API tutorial](https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb) and has been slightly modified to test the model for the current structure
-* [rfcn_resnet101_coco-udacity_sim.config](rfcn_resnet101_coco-udacity_sim.config): this file is copied from the original [Object Detection API config file](https://github.com/tensorflow/models/blob/master/research/object_detection/samples/configs/rfcn_resnet101_coco.config) and modified to process the correct number of classes (4 instead of 90) and link to the correct model/labels/... files
+* [rfcn_resnet101_coco-udacity_sim.config](rfcn_resnet101_coco-udacity_sim.config): this file is copied from the original [Object Detection API config file](https://github.com/tensorflow/models/blob/master/research/object_detection/samples/configs/rfcn_resnet101_coco.config) and modified to process the correct number of classes (4 instead of 90) and link to the correct model/labels/... files. This was also the process for the other .config files in the directory.
 * [label_map.pbtxt](label_map.pbtxt): included in the dataset
 
 ### Process
@@ -70,15 +70,15 @@ export PYTHONPATH=`pwd`/models/research/:`pwd`/models/research/slim
 4. Train the model
 ```bash
 python models/research/object_detection/train.py \
-  --pipeline_config_path=./rfcn_resnet101_coco-udacity_sim.config \
+  --pipeline_config_path=./faster_rcnn_inception_v2_coco-udacity_sim.config \
   --train_dir=dataset/data/sim_training_data/sim_data_capture/
 ```
 
 5. Export for inference (replace the 233 in the command to the latest version available)
 ```bash
 python models/research/object_detection/export_inference_graph.py \
-  --pipeline_config_path=./rfcn_resnet101_coco-udacity_sim.config \
-  --trained_checkpoint_prefix=dataset/data/sim_training_data/sim_data_capture/model.ckpt-233 \
+  --pipeline_config_path=./faster_rcnn_inception_v2_coco-udacity_sim.config \
+  --trained_checkpoint_prefix=dataset/data/sim_training_data/sim_data_capture/model.ckpt-36130 \
   --output_directory=frozen/
 ```
 

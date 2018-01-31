@@ -16,7 +16,7 @@ RUN apt-get upgrade -y
 # end installing Dataspeed DBW
 
 # install python packages
-RUN apt-get install -y python-pip
+RUN apt-get install -y python-pip python-tk
 COPY requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 

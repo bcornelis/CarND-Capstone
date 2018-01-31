@@ -33,15 +33,15 @@ The logic of this method is:
 
 To find the closest waypoint to a specific location (current cars position, light position, ...) the get_next_waypoint_index method is implemented. This will iterate over all waypoints, and finds the one with the closest distance in front of the car.
 
-#### tl_classifier.py
-~~The input of the classifier is an image from the camera, and it should detect whether or not a traffic light is visible, and if it's showing a red light. There are multiple possible ways of implementing this: machine learning, opencv, ...
-
-~~On this project, opencv is used to check if red lights are available. Logic explained in https://solarianprogrammer.com/2015/05/08/detect-red-circles-image-using-opencv/ is used to check if there are any red lights in the image.
-
-I use TensorFlow Object Detection API to detect lights in images. More information can be found in [README](tl_learning/README.md)
-
 #### tl_detector.py
 The most important update in this class is the get_light_state: this method will iterate over the stop line positions in the stop_line_positions array, and find the closest one. If it's in the front of the car, the get_light_state method is used to find the state of the light (red or not). To find the state, the previous classifier is used.
+
+There are 3 different implementations for the tl_classifier (check [tl_detector.py](ros/src/tl_detector/tl_detector.py)):
+* LIGHT_CLASSIFIER_TOPIC: Implemented in [tl_classifier_topic.py](ros/src/tl_detector/light_classification/tl_classifier_topic.py). This implementation is used for testing, and listens on a specific topic. The message type of the topic is an Int32 representing the light state the next light should be. Check the class description for more information about how it should be used
+* LIGHT_CLASSIFIER_TFMODELAPI: Implemented in [tl_classifier.py](ros/src/tl_detector/light_classification/tl_classifier.py). This implementation uses the TensorFlow Object Detection API to check the light state. More information can be found in [README](tl_learning/README.md).
+* LIGHT_CLASSIFIER_OPENCV: Implemented in [tl_classifier_opencv.py](ros/src/tl_detector/light_classification/tl_classifier_opencv.py).In this implementation, OpenCV is used to check if red lights are available. Logic explained in https://solarianprogrammer.com/2015/05/08/detect-red-circles-image-using-opencv/ is used to check if there are any red lights in the image.
+
+By default, the LIGHT_CLASSIFIER_OPENCV classifier is enabled
 
 ### Improvements:
 * closest distance to the car can be optimised much more
